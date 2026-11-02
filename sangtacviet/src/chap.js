@@ -162,6 +162,12 @@ var BOOK_NAME_MAP = {
     "希里爱丽丝": "Maresato Alice",
     "南里香": "Minami Rika",
     "鞠川": "Marikawa"
+  },
+  // Tổng mạn thường ngày: nhân vật tự tạo 宫水爱 ("cung thủy yêu"), 爱 hay dính vào từ sau (宫水|爱说道 = "thích nói")
+  "fanqie/7133787527047023627": {
+    "宫水": "Miyamizu",
+    "宫水爱": "Miyamizu Ai",
+    "宫水家": "nhà Miyamizu"
   }
 };
 
