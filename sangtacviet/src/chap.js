@@ -163,11 +163,41 @@ var BOOK_NAME_MAP = {
     "南里香": "Minami Rika",
     "鞠川": "Marikawa"
   },
-  // Tổng mạn thường ngày: nhân vật tự tạo 宫水爱 ("cung thủy yêu"), 爱 hay dính vào từ sau (宫水|爱说道 = "thích nói")
+  // Tổng mạn thường ngày (Gotoubun, Oregairu, Bokuben, Koe no Katachi, Shigatsu, Kimi no Na wa): nhân vật tự tạo
+  // 宫水爱 ("cung thủy yêu"), 爱 hay dính vào từ sau (宫水|爱说道 = "thích nói"). Gói name của truyện có mục sai
+  // được nhiều gói chọn (风=Hakaze biến mọi chữ "gió" thành tên, từ thường viết hoa) -> ghi đè lại.
   "fanqie/7133787527047023627": {
     "宫水": "Miyamizu",
     "宫水爱": "Miyamizu Ai",
-    "宫水家": "nhà Miyamizu"
+    "宫水家": "nhà Miyamizu",
+    "风": "gió",
+    "温柔": "ôn nhu",
+    "屈辱": "khuất nhục",
+    "噗嗤": "phốc xuy",
+    // Chỉ có trong 1 gói name của truyện (dưới ngưỡng NAME_PACK_MIN_SHARE)
+    "真冬": "Mafuyu",
+    "由比滨结衣": "Yuigahama Yui",
+    "西宫结弦": "Nishimiya Yuzuru",
+    "结弦": "Yuzuru",
+    "八重子": "Yaeko",
+    "中野丸尾": "Nakano Maruo",
+    // Server gộp tên với từ sau thành một từ, hoặc biệt danh không có trong gói
+    "叶风轻轻": "Hakaze nhẹ nhàng",
+    "小叶": "tiểu Hakaze",
+    "美春姐": "Miharu-nee",
+    "小静": "Shizuka-chan",
+    "小静可爱": "Shizukawaii-chan",
+    "灵梦": "Reimu",
+    // Kimi no Na wa, Shigatsu wa Kimi no Uso
+    "宫水三叶": "Miyamizu Mitsuha",
+    "三叶": "Mitsuha",
+    "宫水四叶": "Miyamizu Yotsuha",
+    "立花泷": "Tachibana Taki",
+    "有马公生": "Arima Kousei",
+    "公生": "Kousei",
+    "宫园薰": "Miyazono Kaori",
+    "宫园": "Miyazono",
+    "泽部椿": "Sawabe Tsubaki"
   }
 };
 
@@ -176,8 +206,8 @@ var BOOK_NAME_MAP = {
 // id, name, downloadnum, content), vd 34 = Akame ga Kill, 4037 = Naruto/Boruto. Gói fandom không gắn với truyện
 // nên chỉ lấy tên >= 2 chữ (bỏ "$兰=Ran"...) và đứng sau BOOK_NAME_MAP, name mặc định và gói name của truyện.
 var BOOK_PACKS = {
-  // Tổng mạn thường ngày (Oregairu): gói name của truyện thiếu 阳乃 -> "dương chính là"
-  "fanqie/7133787527047023627": [6297]
+  // Tổng mạn thường ngày: Oregairu (gói name của truyện thiếu 阳乃 -> "dương chính là"), Bokuben (美春, 文乃, 理珠)
+  "fanqie/7133787527047023627": [6297, 19828]
 };
 
 function execute(url) {
