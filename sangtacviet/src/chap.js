@@ -170,7 +170,8 @@ var BOOK_NAME_MAP = {
 // id, name, downloadnum, content), vd 34 = Akame ga Kill, 4037 = Naruto/Boruto. Gói fandom không gắn với truyện
 // nên chỉ lấy tên >= 2 chữ (bỏ "$兰=Ran"...) và đứng sau BOOK_NAME_MAP, name mặc định và gói name của truyện.
 var BOOK_PACKS = {
-  // "faloo/123456": [34]
+  // Tổng mạn thường ngày (Oregairu): gói name của truyện thiếu 阳乃 -> "dương chính là"
+  "fanqie/7133787527047023627": [6297]
 };
 
 function execute(url) {
