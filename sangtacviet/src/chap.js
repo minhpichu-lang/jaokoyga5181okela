@@ -149,6 +149,10 @@ var BOOK_NAME_MAP = {
   },
   // Tận thế: Bắt đầu lựa chọn Busujima Saeko. Gói name chia phiếu cho tên main 方南 (Sanzhi Minami/Phương Nam/
   // Yonan/Fang Nan); server hay tách tên dính vào từ sau: 方|南安|排在了 (安排 = sắp xếp), 方|南面|色 (面色 = sắc mặt)
+  // Tác giả gõ thừa chữ: 中野恩二乃 ("Nakano ân Nino")
+  "faloo/1297302": {
+    "中野恩二乃": "Nakano Nino"
+  },
   "faloo/848817": {
     "方南": "Minami",
     "方南安排": "Minami sắp xếp",
@@ -443,7 +447,9 @@ function renderContent(data, host, bookid, pack, defaults, fandom) {
   if (!pack) pack = none;
   if (!defaults) defaults = none;
   if (!fandom) fandom = none;
-  var words = defaults.words.concat(pack.words, fandom.words);
+  // Bỏ luật "@" có vế nguồn 1 âm tiết: "@lưu=lưu kiếm thuật" (ý là 苇名流 = Ashina lưu) biến cả "không lưu dấu
+  // vết" thành "không lưu kiếm thuật dấu vết". Lọc ở đây để có tác dụng cả với gói đã cache.
+  var words = defaults.words.concat(pack.words, fandom.words).filter(function (w) { return w[0].indexOf(" ") > 0; });
   words.sort(function (a, b) { return b[0].length - a[0].length; });
   var s = data;
   if (s.indexOf("chat-") >= 0) return s; // truyện dạng "chat", giữ nguyên HTML của site
