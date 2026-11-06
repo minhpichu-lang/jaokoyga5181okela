@@ -1,7 +1,7 @@
 // Cấu hình tên miền dùng chung cho mọi script (nạp bằng load("site.js")).
 //
 // Domain chính: biến DOMAIN do người dùng đặt trong app, không có thì dùng mặc định bên dưới.
-//   - vbook 1.1.x: cài đặt extension -> "Add code" -> gõ: let DOMAIN = "https://vinahentai.beer";
+//   - vbook 1.1.x: cài đặt extension -> "Add code" -> gõ: let DOMAIN = "https://vinahentai.vip";
 //   - vbook bản mới: ô "Tên miền" (khóa config DOMAIN trong plugin.json).
 // Khi trang đổi tên miền (vd. .click -> .random), extension tự thích nghi theo thứ tự:
 //   1. Redirect: nếu domain cũ chuyển hướng sang domain mới, lấy domain mới từ URL cuối của response.
@@ -11,7 +11,7 @@
 // Chỉ khi domain chính không phải là trang truyện nữa (chết/404 không có nội dung) mới chạy bước 2, 3,
 // nên bình thường không tốn thêm request nào.
 
-var DEFAULT_BASE = configuredBase("https://vinahentai.beer");
+var DEFAULT_BASE = configuredBase("https://vinahentai.vip");
 var REMOTE_DOMAIN_URL = ""; // vd: "https://gist.githubusercontent.com/<user>/<id>/raw/domain.txt"
 var FALLBACK_BASES = [
   "https://vinahentai.com",
@@ -20,7 +20,7 @@ var FALLBACK_BASES = [
   "https://vinahentai.top",
   "https://vinahentai.site",
   "https://vinahentai.pics",
-  "https://vinahentai.beer",
+  "https://vinahentai.vip",
 ];
 
 var HEADERS = {
@@ -87,9 +87,9 @@ function wrapResponse(r, body) {
 // Trang thật luôn có link truyện hoặc CDN ảnh, kể cả trang 404 của site (vẫn có header/footer).
 // Domain chết/parking trả về 404 hoặc nội dung không liên quan.
 function looksLikeSite(status, body) {
-  if (status == 404 && body.indexOf("truyen-hentai") < 0 && body.indexOf("vinahentai") < 0) return false;
+  if (status == 404 && body.indexOf("/manga/") < 0 && body.indexOf("vinahentai") < 0) return false;
   if (status >= 500) return false;
-  return body.indexOf("truyen-hentai") >= 0 || body.indexOf("manga-posters") >= 0 || body.indexOf("vinahentai") >= 0;
+  return body.indexOf("/manga/") >= 0 || body.indexOf("manga-posters") >= 0 || body.indexOf("vinahentai") >= 0;
 }
 
 function readRemoteDomain() {

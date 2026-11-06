@@ -7,7 +7,7 @@ function execute(url) {
   if (!response.ok) return Response.error("Không tải được mục lục (HTTP " + response.status + ")");
   var doc = response.html();
 
-  // Đường dẫn truyện, dùng để lọc link chương: /truyen-hentai/<slug>/<chap>.
+  // Đường dẫn truyện, dùng để lọc link chương: /manga/<slug>/<chap>.
   // url nhận vào đã percent-encode (do list.js trả ra) còn href trong HTML là Unicode thô,
   // nên so khớp bằng cả hai dạng.
   var path = toPath(url).replace(/\/+$/, "");
@@ -39,7 +39,7 @@ function execute(url) {
 
 function selectChapterLinks(doc, selector, path, rawPath) {
   var out = [];
-  var els = doc.select(selector + "[href^='/truyen-hentai/']");
+  var els = doc.select(selector + "[href^='/manga/']");
   for (var i = 0; i < els.size(); i++) {
     var href = "" + els.get(i).attr("href");
     if (href.indexOf(rawPath + "/") == 0 || href.indexOf(path + "/") == 0) out.push(els.get(i));

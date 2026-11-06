@@ -14,27 +14,27 @@ function execute(url, page) {
   var html = "" + response.text();
   var items = parseCards(Html.parse(html));
 
-  // Chỉ /danh-sach và /genres/* có phân trang. Dữ liệu hydration có \"totalPages\",N;
+  // Chỉ /danh-sach và /the-loai/* có phân trang. Dữ liệu hydration có \"totalPages\",N;
   // /danh-sach ngoài phạm vi vẫn trả về truyện nên phải dựa vào số này (không có thì dừng khi hết truyện).
   // Ở trang cuối N trùng currentPage nên turbo-stream lược mất số (\"totalPages\",\"<khóa kế>\") -> dừng.
-  // /leaderboard, /authors/*, /translators/* bỏ qua tham số page -> chỉ 1 trang.
-  var paged = url.indexOf("/danh-sach") >= 0 || url.indexOf("/genres/") >= 0;
+  // /bang-xep-hang/truyen, /tac-gia/*, /dich-gia/* bỏ qua tham số page -> chỉ 1 trang.
+  var paged = url.indexOf("/danh-sach") >= 0 || url.indexOf("/the-loai/") >= 0;
   var total = html.match(/\\"totalPages\\",(\d+|\\")/);
   var more = !total || (total[1] != '\\"' && pageNum < parseInt(total[1], 10));
   var next = paged && items.length > 0 && more ? "" + (pageNum + 1) : null;
   return Response.success(items, next);
 }
 
-// Mỗi truyện là 1 thẻ <a href="/truyen-hentai/<slug>"> chứa ảnh bìa và tên.
+// Mỗi truyện là 1 thẻ <a href="/manga/<slug>"> chứa ảnh bìa và tên.
 function parseCards(doc) {
-  var links = doc.select("a[href^='/truyen-hentai/']");
+  var links = doc.select("a[href^='/manga/']");
   var result = [];
   var seen = {};
   for (var i = 0; i < links.size(); i++) {
     var a = links.get(i);
     var href = "" + a.attr("href");
-    // Bỏ link chương (/truyen-hentai/slug/chap-x) và link trùng
-    if (href.indexOf("/", "/truyen-hentai/".length) >= 0) continue;
+    // Bỏ link chương (/manga/slug/chap-x) và link trùng
+    if (href.indexOf("/", "/manga/".length) >= 0) continue;
     if (seen[href]) continue;
 
     var img = first(a, "img");

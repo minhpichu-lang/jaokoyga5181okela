@@ -5,6 +5,6 @@ function execute() {
     { title: "Mới cập nhật", input: "/danh-sach", script: "list.js" },
     { title: "Xem nhiều", input: "/danh-sach?sort=views", script: "list.js" },
     { title: "Đã hoàn thành", input: "/danh-sach?status=completed", script: "list.js" },
-    { title: "Bảng xếp hạng", input: "/leaderboard", script: "list.js" },
+    { title: "Bảng xếp hạng", input: "/bang-xep-hang/truyen", script: "list.js" },
   ]);
 }

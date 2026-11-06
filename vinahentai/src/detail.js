@@ -1,4 +1,4 @@
-// Thông tin truyện. url: https://<domain>/truyen-hentai/<slug> (domain có thể là domain cũ app đã lưu).
+// Thông tin truyện. url: https://<domain>/manga/<slug> (domain có thể là domain cũ app đã lưu).
 load("site.js");
 
 function execute(url) {
@@ -17,8 +17,8 @@ function execute(url) {
   var altEl = first(doc, "h1 + div");
   var altName = altEl != null ? ("" + altEl.text()).trim() : "";
 
-  var author = joinTexts(doc.select("a[href^='/authors/'] span.truncate"));
-  var translators = joinTexts(doc.select("a[href^='/translators/'] span.truncate"));
+  var author = joinTexts(doc.select("a[href^='/tac-gia/'] span.truncate"));
+  var translators = joinTexts(doc.select("a[href^='/dich-gia/'] span.truncate"));
 
   // Grid "Tình trạng: / Tác giả: / ..." — nhãn là div.w-28, giá trị là <div> kế tiếp
   var statusEl = first(doc, "div.w-28:containsOwn(Tình trạng) + div");
@@ -36,7 +36,7 @@ function execute(url) {
   // Thể loại: chỉ lấy chip có <span class="capitalize"> (link header/footer không có).
   // Trang chỉ render 8 thể loại đầu, phần còn lại ẩn sau nút "+N" (nằm trong payload React, không parse).
   var genres = [];
-  var gl = doc.select("a[href^='/genres/']");
+  var gl = doc.select("a[href^='/the-loai/']");
   var seen = {};
   for (var j = 0; j < gl.size(); j++) {
     var a = gl.get(j);
@@ -50,12 +50,12 @@ function execute(url) {
 
   // Gợi ý: truyện cùng tác giả / cùng nhóm dịch (các trang này có cùng layout danh sách)
   var suggests = [];
-  var al = doc.select("a[href^='/authors/']");
+  var al = doc.select("a[href^='/tac-gia/']");
   for (var k = 0; k < al.size(); k++) {
     var an = first(al.get(k), "span.truncate");
     if (an != null) suggests.push({ title: "Cùng tác giả: " + ("" + an.text()).trim(), input: "" + al.get(k).attr("href"), script: "list.js" });
   }
-  var tl = doc.select("a[href^='/translators/']");
+  var tl = doc.select("a[href^='/dich-gia/']");
   for (var m = 0; m < tl.size(); m++) {
     var tn = first(tl.get(m), "span.truncate");
     if (tn != null) suggests.push({ title: "Nhóm dịch: " + ("" + tn.text()).trim(), input: "" + tl.get(m).attr("href"), script: "list.js" });
