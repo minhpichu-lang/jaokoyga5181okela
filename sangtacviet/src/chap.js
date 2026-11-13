@@ -202,6 +202,11 @@ var BOOK_NAME_MAP = {
     "宫园薰": "Miyazono Kaori",
     "宫园": "Miyazono",
     "泽部椿": "Sawabe Tsubaki"
+  },
+  // Bắt đầu Hokage nhận được tiếng sấm trái cây (开局火影得到响雷果实): server dịch đúng 日向 = Hyuga, gói name
+  // của truyện chia phiếu Hinata 2 / Hyuga 1 / Hyūga 1 nên Hinata thắng (Hinata là 雏田)
+  "faloo/765485": {
+    "日向": "Hyuga"
   }
 };
 
