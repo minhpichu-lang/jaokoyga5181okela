@@ -58,6 +58,28 @@
       "description": "Đọc doujinshi/manga 18+ từ e-hentai.org (không cần đăng nhập)",
       "type": "comic",
       "locale": "vi_VN"
+    },
+    {
+      "name": "Truyện H (truyenh.top)",
+      "author": "Pichu",
+      "path": "https://raw.githubusercontent.com/minhpichu-lang/jaokoyga5181okela/main/truyenhtop/plugin.zip",
+      "version": 1,
+      "source": "https://truyenh.top",
+      "icon": "https://raw.githubusercontent.com/minhpichu-lang/jaokoyga5181okela/main/truyenhtop/icon.png",
+      "description": "Đọc truyện sắc, truyện H từ truyenh.top",
+      "type": "novel",
+      "locale": "vi_VN"
+    },
+    {
+      "name": "Truyện H (truyen-h.com)",
+      "author": "Pichu",
+      "path": "https://raw.githubusercontent.com/minhpichu-lang/jaokoyga5181okela/main/truyenhcom/plugin.zip",
+      "version": 1,
+      "source": "https://truyen-h.com",
+      "icon": "https://raw.githubusercontent.com/minhpichu-lang/jaokoyga5181okela/main/truyenhcom/icon.png",
+      "description": "Đọc truyện sắc, truyện H từ truyen-h.com",
+      "type": "novel",
+      "locale": "vi_VN"
     }
   ]
 }

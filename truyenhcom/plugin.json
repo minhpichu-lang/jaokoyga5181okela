@@ -1,0 +1,21 @@
+{
+  "metadata": {
+    "name": "Truyện H (truyen-h.com)",
+    "author": "Pichu",
+    "version": 1,
+    "source": "https://truyen-h.com",
+    "regexp": "^https?://(www\\.)?truyen-h\\.com/story\\?id=[^&#]+$",
+    "description": "Đọc truyện sắc, truyện H từ truyen-h.com",
+    "locale": "vi_VN",
+    "tag": "nsfw",
+    "type": "novel"
+  },
+  "script": {
+    "home": "home.js",
+    "genre": "genre.js",
+    "detail": "detail.js",
+    "search": "search.js",
+    "toc": "toc.js",
+    "chap": "chap.js"
+  }
+}
