@@ -2,10 +2,10 @@
   "metadata": {
     "name": "VinaHentai",
     "author": "Pichu",
-    "version": 5,
-    "source": "https://vinahentai.vip",
+    "version": 6,
+    "source": "https://vinahentai.best",
     "regexp": "^https?://(www\\.)?vinahentai\\.[a-z0-9.]+/(manga|truyen-hentai)/[^/]+/?$",
-    "description": "Đọc truyện hentai 18+ vietsub từ vinahentai.vip",
+    "description": "Đọc truyện hentai 18+ vietsub từ vinahentai.best",
     "locale": "vi_VN",
     "tag": "nsfw",
     "type": "comic"
@@ -21,8 +21,8 @@
   "config": {
     "DOMAIN": {
       "title": "Tên miền",
-      "subtitle": "Khi web đổi đuôi, nhập domain mới (vd. https://vinahentai.vip). Để trống = mặc định",
-      "default": "https://vinahentai.vip",
+      "subtitle": "Khi web đổi đuôi, nhập domain mới (vd. https://vinahentai.best). Để trống = mặc định",
+      "default": "https://vinahentai.best",
       "mode": "input",
       "format": "text"
     }
