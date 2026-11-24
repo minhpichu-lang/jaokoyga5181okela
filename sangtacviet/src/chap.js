@@ -219,6 +219,26 @@ var BOOK_PACKS = {
   "fanqie/7133787527047023627": [6297, 19828]
 };
 
+// Truyện sáng tác (host "sangtac"): API trả nội dung với chữ cái/chữ số thay bằng ký tự Private Use Area, web
+// hiển thị đúng nhờ /ctp/cssoutput.css ghi đè các font đọc bằng font mã hóa /ctp/fenc/<tên>.<mốc ms>.ttf
+// (bản 08/03/2026, mọi font dùng chung một bảng; i, j, p và chữ có dấu không bị mã hóa). Bảng dưới: ký tự thứ n
+// của FONT_PUA hiển thị thành ký tự thứ n của FONT_PLAIN, lấy bằng cách so outline glyph PUA với glyph chữ
+// thường trong cùng font (fontTools). Site đổi font thì sẽ còn sót ký tự PUA lạ -> chap.js báo lỗi, làm lại bảng.
+var FONT_PUA =
+  "\ue01b\ue01e\ue06c\ue100\ue116\ue122\ue124\ue14b\ue160\ue186\ue1a4\ue1d8\ue1ea\ue22b\ue240\ue27e\ue2a9\ue2ca\ue2e3\ue2f8" +
+  "\ue30f\ue32f\ue334\ue34a\ue38f\ue3b7\ue3f1\ue426\ue43e\ue44e\ue49a\ue4a3\ue4cc\ue4ec\ue4f3\ue519\ue51f\ue566\ue57b\ue5bd" +
+  "\ue5c1\ue5f0\ue5fa\ue636\ue65b\ue65d\ue660\ue68d\ue691\ue6e0\ue6f1\ue6f3\ue705\ue71a\ue74f\ue765\ue775\ue77d\ue7c7\ue902" +
+  "\ue915\ue91f\ue946\ue95d\ue97b\ue9d7\ue9f9\uea20\uea2d\uea65\uea82\ueab2\ueabb\ueacf\uead5\ueaed\ueb02\ueb0e\ueb0f\ueb18" +
+  "\ueb27\ueb62\ueb63\uebec\uebf6\uec0f\uec19\uec50\uecad\uecdb\uecf8\ued2c\ued8c\uedec\uee01\uee0c\uee0f\uee47\uee5c\ueea1" +
+  "\ueec1\ueee3\uef1f\uef35\uef3a\uef57\uefc8\uefd4\uefda\uefef\ueff6\uf019\uf050\uf065\uf096\uf0a6\uf0bd\uf0c0";
+var FONT_PLAIN =
+  "Ayto4WZJeDfKYhxbBGkq" +
+  "FE2Iv7lS6Xc8s5r0gNOC" +
+  "dumPHz91MRTaw3QnVLUA" +
+  "Oea2frKYvSo6ybLFsCRw" +
+  "Dl9kNqJ7VZUQE5cnuWPX" +
+  "IG8xdHm1h43TB0ztMg";
+
 function execute(url) {
   var info = parseBookUrl(url);
   if (info == null || !info.cid) return Response.error("URL chương không đúng dạng /truyen/<nguồn>/1/<id>/<chương>/");
@@ -259,9 +279,16 @@ function execute(url) {
   }
   if (json.isComic) return Response.error("Extension này chưa hỗ trợ truyện tranh");
   var data = "" + (json.data || "");
-  // Truyện sáng tác (host "sangtac") được bảo vệ bằng font riêng: chữ cái thay bằng ký tự Private Use Area,
-  // chỉ hiển thị đúng với font của site -> không đọc được ngoài web
-  if (/[\uE000-\uF8FF]/.test(data)) return Response.error("Nội dung được mã hóa bằng font riêng của site (truyện sáng tác), extension chưa hỗ trợ");
+  // Truyện sáng tác: giải mã font riêng (xem FONT_PUA)
+  data = data.replace(/[\uE000-\uF8FF]/g, function (c) {
+    var i = FONT_PUA.indexOf(c);
+    return i >= 0 ? FONT_PLAIN.charAt(i) : c;
+  });
+  if (/[\uE000-\uF8FF]/.test(data)) return Response.error("Site đã đổi font mã hóa truyện sáng tác, cần cập nhật bảng FONT_PUA trong chap.js");
+  // Ảnh trong truyện sáng tác: [[104-116-116-112-...]] = mã ký tự của URL ảnh (web: decodeNumMask)
+  if (info.host == "sangtac") data = data.replace(/\[\[([\d-]+)\]\]/g, function (m, codes) {
+    return "<img src=\"" + String.fromCharCode.apply(null, codes.split("-")) + "\">";
+  });
 
   // defaultname: name mặc định chủ truyện/admin đặt cho truyện (web áp dụng phía trình duyệt), cùng định dạng gói name
   var defaults = parseNameText("" + (json.defaultname || ""), 1);
@@ -461,8 +488,8 @@ function renderContent(data, host, bookid, pack, defaults, fandom) {
   // Ghi chú của site ở đầu chương (span chữ xám): "@Bạn đang đọc bản lưu trong hệ thống", "Đọc tại sangtacviet.com",
   // "Tải ảnh: 0.062s Scan: 3.699s"
   s = s.replace(/<span[^>]*color:\s*gray[^>]*>[^<]*<\/span>/g, "");
-  // Truyện tự dịch: dấu < trong văn bản không phải thẻ (site cũng escape như vậy)
-  if (host == "dich") s = s.replace(/<(?=[^i\/])/g, "&lt;");
+  // Truyện tự dịch/sáng tác: dấu < trong văn bản không phải thẻ (site cũng escape như vậy)
+  if (host == "dich" || host == "sangtac") s = s.replace(/<(?=[^i\/])/g, "&lt;");
   if (host == "ciweimao") s = s.replace(/<span>[\s\S]*?<\/span>/g, "");
   // Bỏ lớp bọc <i ...>từ</i>, giữ nghĩa đã dịch (hoặc tên nếu chữ gốc của vài từ liền nhau khớp)
   var maps = [BOOK_NAME_MAP[host + "/" + bookid] || {}, defaults.names, pack.names, fandom.names, NAME_MAP];
