@@ -242,10 +242,13 @@ var FONT_PLAIN =
 // Đổi xưng hô của truyện sáng tác (anh/em/cậu/cháu...) sang kiểu convert (ta/ngươi/hắn/nàng) bằng Gemini. Chỉ bật khi
 // khai báo API key qua "Add code" của extension (không để key trong repo):
 //     let GEMINI_API_KEY = "AIza..."; let GEMINI_MODEL = "<tên model>";   (GEMINI_MODEL không bắt buộc)
-// Gemini lỗi (hết hạn mức, mất mạng, trả thiếu dòng) thì trả bản gốc để đọc/nghe không bị ngắt. Kết quả lưu
-// localStorage (AI_CACHE_MAX chương gần nhất) để mở lại chương không gọi lại. Gọi bản stream (SSE) vì bản thường chỉ
-// trả về khi viết xong cả chương (10-30 s), dễ quá thời gian chờ đọc của HTTP client trong app.
-var GEMINI_DEFAULT_MODEL = "gemini-3.5-flash-lite";
+// Gemini lỗi (hết hạn mức, mất mạng) thì trả bản gốc để đọc/nghe không bị ngắt. Kết quả lưu localStorage
+// (AI_CACHE_MAX chương gần nhất) để mở lại chương không gọi lại. Gọi bản stream (SSE) vì bản thường chỉ trả về khi
+// viết xong, dễ quá thời gian chờ đọc của HTTP client trong app. Đo 11/2026 trên chương 92/93/97 (có câu thoại liền
+// nhau không ghi người nói, "em" lúc là người nói lúc là người nghe): gemini-3.5-flash đổi đúng, ~8-11 s/chương;
+// flash-lite nhanh (1-7 s) nhưng thất thường (có lần bỏ sót gần hết, nhầm người nói) -> chỉ dùng khi flash lỗi.
+var GEMINI_DEFAULT_MODEL = "gemini-3.5-flash";
+var GEMINI_FALLBACK_MODEL = "gemini-3.5-flash-lite";
 var AI_CACHE_MAX = 100;
 var AI_PROMPT = [
   "Bạn là biên tập viên truyện. Người dùng gửi một chương truyện tiếng Việt. Hãy chỉ sửa đại từ nhân xưng và từ xưng hô",
@@ -264,7 +267,8 @@ var AI_PROMPT = [
   "- Viết hoa chữ đầu nếu đại từ đứng đầu câu.",
   "- Chỉ thay đại từ. Tuyệt đối không thêm, bớt hay sửa bất kỳ từ nào khác (kể cả câu thiếu chữ, lỗi chính tả), không đổi",
   "  dấu câu, không giải thích. Giữ nguyên các ký hiệu dạng [[số]].",
-  "- Giữ nguyên cách xuống dòng: trả về toàn bộ văn bản đã sửa, đúng số dòng như bản gốc."
+  "- Mỗi dòng đầu vào có dạng \"<số>| nội dung\". Chỉ trả về những dòng có sửa, mỗi dòng dạng \"<số>| nội dung đã sửa\"",
+  "  (cả dòng, không chép lại dòng gốc, không dùng mũi tên), không trả dòng không đổi. Không có gì cần sửa thì trả về \"0|\"."
 ].join("\n");
 
 function execute(url) {
@@ -329,7 +333,7 @@ function execute(url) {
 // Đổi xưng hô bằng Gemini (xem AI_PROMPT). Không có key hoặc lỗi thì trả nguyên text.
 function convertPronouns(text, bookid, cid) {
   if (typeof GEMINI_API_KEY == "undefined" || !GEMINI_API_KEY) return text;
-  var key = "ai:" + bookid + "/" + cid;
+  var key = "ai2:" + bookid + "/" + cid;
   try {
     var hit = localStorage.getItem(key);
     if (hit != null && ("" + hit).length > 0) return "" + hit;
@@ -341,14 +345,22 @@ function convertPronouns(text, bookid, cid) {
     imgs.push(m);
     return "[[" + (imgs.length - 1) + "]]";
   });
-  var res = callGemini(src);
-  if (res == null) return text;
-  // Gemini đôi khi bỏ/gộp dòng (số dòng có chữ phải khớp), sửa cả chữ khác ("thay quần" -> "thay quần áo") hoặc đổi
-  // đại từ vốn đã đúng ("Ta đã khiêng đồ" -> "Ngươi đã..."): dòng nào như vậy thì giữ dòng gốc (xem pronounsOnly)
+  // Gửi từng dòng có đánh số, Gemini chỉ trả các dòng có sửa ("<số>| dòng mới"): nhanh hơn viết lại cả chương, không
+  // làm lệch/mất dòng, và (đo trên chương 93/97) theo lượt lời trong hội thoại đúng hơn
   var a = src.split("\n").filter(function (l) { return l.trim() != ""; });
-  var b = res.split("\n").filter(function (l) { return l.trim() != ""; });
-  if (a.length != b.length) return text;
-  for (var i = 0; i < a.length; i++) if (!pronounsOnly(a[i], b[i])) b[i] = a[i];
+  var res = callGemini(a.map(function (l, i) { return (i + 1) + "| " + l; }).join("\n"));
+  if (res == null) return text;
+  var b = a.slice(), lines = res.split("\n");
+  for (var i = 0; i < lines.length; i++) {
+    var m = /^\s*(\d+)\|\s?(.*)$/.exec(lines[i]);
+    if (m == null || m[1] < 1 || m[1] > a.length) continue;
+    // Đôi khi Gemini chép cả dòng gốc: "<dòng gốc> -> <dòng mới>"
+    var t = m[2], arrow = t.lastIndexOf(" -> ");
+    if (arrow >= 0) t = t.substring(arrow + 4);
+    // Gemini đôi khi sửa cả chữ khác ("thay quần" -> "thay quần áo"), đổi tên thành đại từ ("Beel" -> "Hắn") hoặc đổi
+    // đại từ vốn đã đúng ("Ta đã khiêng đồ" -> "Ngươi đã..."): dòng như vậy giữ bản gốc (xem pronounsOnly)
+    if (pronounsOnly(a[m[1] - 1], t)) b[m[1] - 1] = t;
+  }
   var out = b.join("\n\n").replace(/\[\[(\d+)\]\]/g, function (m, n) { return imgs[parseInt(n, 10)] || m; });
 
   try {
@@ -392,13 +404,21 @@ function pronounKey(line) {
   return { rest: rest, count: count };
 }
 
-// Gọi Gemini bản stream (SSE: mỗi dòng "data: {json}" chứa một đoạn text). Trả về text hoặc null nếu lỗi/bị cắt.
+// Gọi Gemini: thử model chính (GEMINI_MODEL hoặc GEMINI_DEFAULT_MODEL), lỗi (hết hạn mức...) thì thử GEMINI_FALLBACK_MODEL.
 function callGemini(text) {
   var model = typeof GEMINI_MODEL != "undefined" && GEMINI_MODEL ? "" + GEMINI_MODEL : GEMINI_DEFAULT_MODEL;
+  var out = callGeminiModel(model, text);
+  if (out == null && model != GEMINI_FALLBACK_MODEL) out = callGeminiModel(GEMINI_FALLBACK_MODEL, text);
+  return out;
+}
+
+// Gọi Gemini bản stream (SSE: mỗi dòng "data: {json}" chứa một đoạn text). Trả về text hoặc null nếu lỗi/bị cắt.
+function callGeminiModel(model, text) {
   var body = {
     systemInstruction: { parts: [{ text: AI_PROMPT }] },
     contents: [{ role: "user", parts: [{ text: text }] }],
-    generationConfig: { temperature: 0 },
+    // Mặc định gemini-3.5-flash "suy nghĩ" rất lâu (~60 s/chương); "minimal" vẫn theo được lượt lời trong hội thoại
+    generationConfig: { temperature: 0, thinkingConfig: { thinkingLevel: "minimal" } },
     safetySettings: [
       { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
       { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
