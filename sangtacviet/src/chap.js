@@ -239,38 +239,6 @@ var FONT_PLAIN =
   "Dl9kNqJ7VZUQE5cnuWPX" +
   "IG8xdHm1h43TB0ztMg";
 
-// Đổi xưng hô của truyện sáng tác (anh/em/cậu/cháu...) sang kiểu convert (ta/ngươi/hắn/nàng) bằng Gemini. Chỉ bật khi
-// khai báo API key qua "Add code" của extension (không để key trong repo):
-//     let GEMINI_API_KEY = "AIza..."; let GEMINI_MODEL = "<tên model>";   (GEMINI_MODEL không bắt buộc)
-// Gemini lỗi (hết hạn mức, mất mạng) thì trả bản gốc để đọc/nghe không bị ngắt. Kết quả lưu localStorage
-// (AI_CACHE_MAX chương gần nhất) để mở lại chương không gọi lại. Gọi bản stream (SSE) vì bản thường chỉ trả về khi
-// viết xong, dễ quá thời gian chờ đọc của HTTP client trong app. Đo 11/2026 trên chương 92/93/97 (có câu thoại liền
-// nhau không ghi người nói, "em" lúc là người nói lúc là người nghe): gemini-3.5-flash đổi đúng, ~8-11 s/chương;
-// flash-lite nhanh (1-7 s) nhưng thất thường (có lần bỏ sót gần hết, nhầm người nói) -> chỉ dùng khi flash lỗi.
-var GEMINI_DEFAULT_MODEL = "gemini-3.5-flash";
-var GEMINI_FALLBACK_MODEL = "gemini-3.5-flash-lite";
-var AI_CACHE_MAX = 100;
-var AI_PROMPT = [
-  "Bạn là biên tập viên truyện. Người dùng gửi một chương truyện tiếng Việt. Hãy chỉ sửa đại từ nhân xưng và từ xưng hô",
-  "theo văn phong truyện convert (dịch từ tiếng Trung), giữ nguyên tuyệt đối mọi chữ khác.",
-  "Quy tắc:",
-  "- Người nói tự xưng (tôi, tớ, mình, em, anh, chị, cháu, con...) -> \"ta\"; số nhiều (chúng tôi, chúng em, bọn tớ...) -> \"chúng ta\".",
-  "- Gọi người nghe là nam hoặc chưa rõ giới tính (anh, cậu, cháu, con, bạn, ông, chú, bác, mày...) -> \"ngươi\";",
-  "  là nữ (em, cô, chị, bà...) -> \"nàng\"; số nhiều (các anh, các cậu, các em...) -> \"các ngươi\".",
-  "- Ngôi thứ ba, cả trong lời kể: nam (anh ấy, cậu ấy, ông ấy, anh ta, \"cậu\"/\"ông\" chỉ một nhân vật) -> \"hắn\",",
-  "  người già có thể là \"lão\"; nữ (cô ấy, chị ấy, bà ấy, cô ta, \"cô\" chỉ một nhân vật) -> \"nàng\".",
-  "  Số nhiều ngôi thứ ba (họ, bọn họ) giữ nguyên, không đổi thành \"các ngươi\".",
-  "- Dựa vào ngữ cảnh để biết ai đang nói với ai và giới tính của họ. Ví dụ nam hỏi nữ \"Em đi đâu à?\" -> \"Nàng đi đâu à?\";",
-  "  nữ nói với nam \"Em để ở đây.\" -> \"Ta để ở đây.\"; cháu nói với ông \"Cháu thấy...\" -> \"Ta thấy...\".",
-  "- Giữ nguyên các từ là danh từ, quan hệ, chức danh chứ không phải đại từ: cậu bé, ông chủ, anh trai, em gái, ông nội,",
-  "  cô gái, mẹ, cha, công chúa... và mọi từ ghép (anh hùng, chú ý, bàn, công hội...). Giữ nguyên ta, ngươi, hắn, nàng, lão.",
-  "- Viết hoa chữ đầu nếu đại từ đứng đầu câu.",
-  "- Chỉ thay đại từ. Tuyệt đối không thêm, bớt hay sửa bất kỳ từ nào khác (kể cả câu thiếu chữ, lỗi chính tả), không đổi",
-  "  dấu câu, không giải thích. Giữ nguyên các ký hiệu dạng [[số]].",
-  "- Mỗi dòng đầu vào có dạng \"<số>| nội dung\". Chỉ trả về những dòng có sửa, mỗi dòng dạng \"<số>| nội dung đã sửa\"",
-  "  (cả dòng, không chép lại dòng gốc, không dùng mũi tên), không trả dòng không đổi. Không có gì cần sửa thì trả về \"0|\"."
-].join("\n");
-
 function execute(url) {
   var info = parseBookUrl(url);
   if (info == null || !info.cid) return Response.error("URL chương không đúng dạng /truyen/<nguồn>/1/<id>/<chương>/");
@@ -317,7 +285,6 @@ function execute(url) {
     return i >= 0 ? FONT_PLAIN.charAt(i) : c;
   });
   if (/[\uE000-\uF8FF]/.test(data)) return Response.error("Site đã đổi font mã hóa truyện sáng tác, cần cập nhật bảng FONT_PUA trong chap.js");
-  if (info.host == "sangtac") data = convertPronouns(data, info.bookid, info.cid);
   // Ảnh trong truyện sáng tác: [[104-116-116-112-...]] = mã ký tự của URL ảnh (web: decodeNumMask)
   if (info.host == "sangtac") data = data.replace(/\[\[([\d-]+)\]\]/g, function (m, codes) {
     return "<img src=\"" + String.fromCharCode.apply(null, codes.split("-")) + "\">";
@@ -328,124 +295,6 @@ function execute(url) {
   var content = renderContent(data, info.host, info.bookid, loadNamePack(info.host, info.bookid), defaults, loadBookPacks(info.host, info.bookid));
   if (!content) return Response.error("Chương không có nội dung (nguồn gốc bị khóa hoặc trống)");
   return Response.success(content);
-}
-
-// Đổi xưng hô bằng Gemini (xem AI_PROMPT). Không có key hoặc lỗi thì trả nguyên text.
-function convertPronouns(text, bookid, cid) {
-  if (typeof GEMINI_API_KEY == "undefined" || !GEMINI_API_KEY) return text;
-  var key = "ai2:" + bookid + "/" + cid;
-  try {
-    var hit = localStorage.getItem(key);
-    if (hit != null && ("" + hit).length > 0) return "" + hit;
-  } catch (e) {}
-
-  // Ảnh [[mã-ký-tự...]] rất dài, thay bằng [[số thứ tự]] cho gọn rồi trả lại sau
-  var imgs = [];
-  var src = text.replace(/\[\[[\d-]+\]\]/g, function (m) {
-    imgs.push(m);
-    return "[[" + (imgs.length - 1) + "]]";
-  });
-  // Gửi từng dòng có đánh số, Gemini chỉ trả các dòng có sửa ("<số>| dòng mới"): nhanh hơn viết lại cả chương, không
-  // làm lệch/mất dòng, và (đo trên chương 93/97) theo lượt lời trong hội thoại đúng hơn
-  var a = src.split("\n").filter(function (l) { return l.trim() != ""; });
-  var res = callGemini(a.map(function (l, i) { return (i + 1) + "| " + l; }).join("\n"));
-  if (res == null) return text;
-  var b = a.slice(), lines = res.split("\n");
-  for (var i = 0; i < lines.length; i++) {
-    var m = /^\s*(\d+)\|\s?(.*)$/.exec(lines[i]);
-    if (m == null || m[1] < 1 || m[1] > a.length) continue;
-    // Đôi khi Gemini chép cả dòng gốc: "<dòng gốc> -> <dòng mới>"
-    var t = m[2], arrow = t.lastIndexOf(" -> ");
-    if (arrow >= 0) t = t.substring(arrow + 4);
-    // Gemini đôi khi sửa cả chữ khác ("thay quần" -> "thay quần áo"), đổi tên thành đại từ ("Beel" -> "Hắn") hoặc đổi
-    // đại từ vốn đã đúng ("Ta đã khiêng đồ" -> "Ngươi đã..."): dòng như vậy giữ bản gốc (xem pronounsOnly)
-    if (pronounsOnly(a[m[1] - 1], t)) b[m[1] - 1] = t;
-  }
-  var out = b.join("\n\n").replace(/\[\[(\d+)\]\]/g, function (m, n) { return imgs[parseInt(n, 10)] || m; });
-
-  try {
-    var keys = JSON.parse("" + localStorage.getItem("ai_keys"));
-    if (!(keys instanceof Array)) keys = [];
-    keys.push(key);
-    // Engine chỉ chắc có getItem/setItem -> xóa bằng cách ghi chuỗi rỗng
-    while (keys.length > AI_CACHE_MAX) localStorage.setItem(keys.shift(), "");
-    localStorage.setItem(key, out);
-    localStorage.setItem("ai_keys", JSON.stringify(keys));
-  } catch (e) {}
-  return out;
-}
-
-// Các từ Gemini được phép đổi (đại từ cũ và mới) và các đại từ convert phải giữ lại.
-var PRONOUNS = {};
-("tôi tớ mình em anh chị cháu con bạn ông bà chú bác cô cậu mày tao ta ngươi hắn nàng lão ấy y thị chúng các bọn họ")
-  .split(" ").forEach(function (w) { PRONOUNS[w] = true; });
-var CONVERT_PRONOUNS = ["ta", "ngươi", "hắn", "nàng", "lão"];
-
-// b là bản Gemini sửa từ dòng a: chỉ được thay đại từ (bỏ hết đại từ thì hai dòng giống hệt nhau), và không được
-// bớt đại từ convert có sẵn trong a.
-function pronounsOnly(a, b) {
-  var ka = pronounKey(a), kb = pronounKey(b);
-  if (ka.rest != kb.rest) return false;
-  for (var i = 0; i < CONVERT_PRONOUNS.length; i++) {
-    var w = CONVERT_PRONOUNS[i];
-    if ((kb.count[w] || 0) < (ka.count[w] || 0)) return false;
-  }
-  return true;
-}
-
-function pronounKey(line) {
-  var count = {};
-  var rest = line.toLowerCase().split(/\s+/).map(function (t) {
-    var core = t.replace(/^[^0-9a-zà-ỹđ]+|[^0-9a-zà-ỹđ]+$/g, "");
-    if (!PRONOUNS[core]) return t;
-    count[core] = (count[core] || 0) + 1;
-    return t.replace(core, "");
-  }).join("");
-  return { rest: rest, count: count };
-}
-
-// Gọi Gemini: thử model chính (GEMINI_MODEL hoặc GEMINI_DEFAULT_MODEL), lỗi (hết hạn mức...) thì thử GEMINI_FALLBACK_MODEL.
-function callGemini(text) {
-  var model = typeof GEMINI_MODEL != "undefined" && GEMINI_MODEL ? "" + GEMINI_MODEL : GEMINI_DEFAULT_MODEL;
-  var out = callGeminiModel(model, text);
-  if (out == null && model != GEMINI_FALLBACK_MODEL) out = callGeminiModel(GEMINI_FALLBACK_MODEL, text);
-  return out;
-}
-
-// Gọi Gemini bản stream (SSE: mỗi dòng "data: {json}" chứa một đoạn text). Trả về text hoặc null nếu lỗi/bị cắt.
-function callGeminiModel(model, text) {
-  var body = {
-    systemInstruction: { parts: [{ text: AI_PROMPT }] },
-    contents: [{ role: "user", parts: [{ text: text }] }],
-    // Mặc định gemini-3.5-flash "suy nghĩ" rất lâu (~60 s/chương); "minimal" vẫn theo được lượt lời trong hội thoại
-    generationConfig: { temperature: 0, thinkingConfig: { thinkingLevel: "minimal" } },
-    safetySettings: [
-      { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-      { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-      { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-      { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-    ]
-  };
-  try {
-    var r = fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":streamGenerateContent?alt=sse", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": "" + GEMINI_API_KEY },
-      body: JSON.stringify(body)
-    });
-    if (!r.ok) return null;
-    var lines = ("" + r.text()).split("\n"), out = "", finish = "";
-    for (var i = 0; i < lines.length; i++) {
-      if (lines[i].indexOf("data:") != 0) continue;
-      var c = (JSON.parse(lines[i].substring(5)).candidates || [])[0];
-      if (!c) continue;
-      var parts = c.content && c.content.parts || [];
-      for (var j = 0; j < parts.length; j++) if (parts[j].text && !parts[j].thought) out += parts[j].text;
-      if (c.finishReason) finish = c.finishReason;
-    }
-    return finish == "STOP" && out ? out : null;
-  } catch (e) {
-    return null;
-  }
 }
 
 // Gói name người đọc đăng cho truyện (mục "Tải name" trên web): GET /namesys.php?host=&book= trả về các <tr>,
