@@ -20,10 +20,11 @@ function execute(url) {
   if (servers.length == 0) return Response.error("Không tìm thấy ảnh trong chương");
 
   var referer = siteUrl(url);
-  for (var i = 0; i < servers.length - 1; i++) {
+  for (var i = 0; i < servers.length; i++) {
     if (imageAlive(servers[i][0], referer)) return Response.success(servers[i]);
   }
-  return Response.success(servers[servers.length - 1]);
+  // Truyện cũ: mọi server là proxy tới host ảnh đã chết/đã xóa file (hadamanga, henzz, saikomangaraw...)
+  return Response.error("Ảnh của chương này đã bị xóa ở nguồn (mọi server ảnh đều lỗi), web hentaivnx cũng không xem được");
 }
 
 function parseServer(html, name) {

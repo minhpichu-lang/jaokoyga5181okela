@@ -2,7 +2,7 @@
   "metadata": {
     "name": "HentaiVNX",
     "author": "Pichu",
-    "version": 1,
+    "version": 2,
     "source": "https://www.hentaivnx.live",
     "regexp": "^https?://(www\\.)?hentaivnx\\.[a-z0-9.]+/truyen-hentai/[^/]+-\\d+/?$",
     "description": "Đọc truyện hentai 18+ vietsub từ hentaivnx.live",
