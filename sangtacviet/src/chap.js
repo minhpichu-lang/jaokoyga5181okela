@@ -22,9 +22,11 @@ load("site.js");
 // CHAP_REFILL_MS hồi một lượt. Đọc bình thường (vài phút/chương) thì bucket luôn đầy, chương mở ra tải ngay.
 // vbook gọi chap.js song song (tải trước chương, tải truyện) nên sleep riêng trong từng lần gọi không giãn được:
 // các lần gọi dùng chung trạng thái bucket trong localStorage (lưu được giữa các lần gọi) và chờ tới lượt.
+// Đo lại 27/11/2026 từ PC: tải liền 5 chương rồi chờ 40 s -> bị bắt ở chương thứ 6; tải đều mỗi 30 s, không tải
+// liền -> 40 chương liên tiếp không bị bắt. Nên chỉ dùng nhịp đều 30 s (thời gian tải cả truyện chỉ phụ thuộc nhịp đều).
 // Đặt CHAP_REFILL_MS = 0 để tắt.
-var CHAP_BURST = 5;
-var CHAP_REFILL_MS = 50000;
+var CHAP_BURST = 1;
+var CHAP_REFILL_MS = 30000;
 var CHAP_MIN_GAP_MS = 3000;
 
 // Tên thay theo chữ gốc (thuộc tính t của từng từ). Dùng cho tên mà bản dịch máy ra cụm từ thường, không thay
